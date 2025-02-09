@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 	"regexp"
+	"strings"
 
 	"github.com/pakerfeldt/knx-mqtt/models"
 	"github.com/rs/zerolog/log"
@@ -41,7 +42,7 @@ func ParseGroupAddressExport(filePath string) (*models.KNX, error) {
 				}
 				knxItems.AddGroupAddress(models.GroupAddress{
 					Name:      address.Name,
-					FullName:  fmt.Sprintf("%s/%s/%s", main.Name, middle.Name, address.Name),
+					FullName:  fmt.Sprintf("%s/%s/%s", main.Name, middle.Name, replaceSlashInName(address.Name)),
 					Address:   address.Address,
 					Datapoint: convertDptFormat(address.DPTs),
 				})
@@ -50,6 +51,14 @@ func ParseGroupAddressExport(filePath string) (*models.KNX, error) {
 	}
 
 	return &knxItems, nil
+}
+
+func replaceSlashInName(name string) string {
+	newName := strings.ReplaceAll(name, "/", "_")
+	if newName != name {
+		log.Warn().Msgf("%s was replaced with %s to avoid MQTT topic separation.", name, newName)
+	}
+	return newName
 }
 
 func convertDptFormat(dpt string) string {
