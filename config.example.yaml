@@ -6,7 +6,7 @@ outgoingMqttMessage:
 
   # The message type to publish over MQTT when receiving events from KNX
   # One of:
-  #   value - a string representation of the value excluding the unit
+  #   value - the value with preserved type or as string representation if emitValueAsString is true
   #   value-with-unit - a string representation of the value including the unit (if any)
   #   bytes - the raw bytes as received from KNX
   #   json  - a json object containing the fields specified in includedJsonFields.
@@ -16,6 +16,8 @@ outgoingMqttMessage:
   emitUsingAddress: true
   # Emit values using human readable group address names
   emitUsingName: true
+  # Emit the value payload as string, if false, the type will be preserved.
+  emitValueAsString: false
 
   # When sending MQTT messages as JSON, these values determines what should be included.
   includedJsonFields:
@@ -23,7 +25,7 @@ outgoingMqttMessage:
     bytes: true
     # Include the field `name`, containing the human readable name of the address
     name: true
-    # Include the field `string`, containing a string representation of the value
+    # Include the field `value`, containing the raw value or as string representation if emitValueAsString is true
     value: true
     # Include the field `unit`, containing the unit of the datatype (if any)
     unit: true
