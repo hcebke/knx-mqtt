@@ -2,8 +2,10 @@ package utils
 
 import (
 	"fmt"
+	"reflect"
 	"regexp"
 	"strconv"
+	"strings"
 
 	"github.com/vapourismo/knx-go/knx/dpt"
 )
@@ -455,4 +457,59 @@ var stringPackFunctions = map[string]func(string) []byte{
 
 		return datapoint.Pack()
 	},
+}
+
+func ExtractDatapointValue(dp dpt.Datapoint, dptType string) interface{} {
+	mainType := strings.SplitN(dptType, ".", 2)[0]
+	rv := reflect.ValueOf(dp)
+	if rv.Kind() == reflect.Ptr {
+		rv = rv.Elem()
+	}
+	switch mainType {
+	case "1":
+		if rv.Kind() == reflect.Bool {
+			return rv.Bool()
+		}
+	case "6":
+		if rv.Kind() == reflect.Int8 {
+			return int8(rv.Int())
+		}
+	case "7":
+		if rv.Kind() == reflect.Uint16 {
+			return uint16(rv.Uint())
+		}
+	case "9", "14":
+		if rv.Kind() == reflect.Float32 {
+			return float32(rv.Float())
+		}
+	case "12":
+		if rv.Kind() == reflect.Uint32 {
+			return uint32(rv.Uint())
+		}
+	case "13":
+		if rv.Kind() == reflect.Int32 {
+			return int32(rv.Int())
+		}
+	case "17", "18", "20":
+		if rv.Kind() == reflect.Uint8 {
+			return uint8(rv.Uint())
+		}
+	}
+
+	switch dptType {
+	case "5.001", "5.003", "8.003", "8.004", "8.010":
+		if rv.Kind() == reflect.Float32 {
+			return float32(rv.Float())
+		}
+	case "5.004", "5.005":
+		if rv.Kind() == reflect.Uint8 {
+			return uint8(rv.Uint())
+		}
+	case "8.001", "8.002", "8.005", "8.006", "8.007", "8.011":
+		if rv.Kind() == reflect.Int16 {
+			return int16(rv.Int())
+		}
+	}
+
+	return StringWithoutSuffix(dp)
 }

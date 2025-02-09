@@ -4,7 +4,6 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"strings"
 
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 	"github.com/pakerfeldt/knx-mqtt/models"
@@ -45,12 +44,12 @@ func incomingKnxEventHandler(event knx.GroupEvent, mqttClient mqtt.Client, knxIt
 		return
 	}
 	groupAddress := knxItems.GroupAddresses[index]
-	dpt, ok := dpt.Produce(groupAddress.Datapoint)
+	datapoint, ok := dpt.Produce(groupAddress.Datapoint)
 	if ok {
-		dpt.Unpack(event.Data)
-		log.Debug().Str("protocol", "knx").Str("address", event.Destination.String()).Str("name", groupAddress.Name).Str("value", dpt.String()).Msg("Incoming")
+		datapoint.Unpack(event.Data)
+		log.Debug().Str("protocol", "knx").Str("address", event.Destination.String()).Str("name", groupAddress.Name).Str("value", datapoint.String()).Msg("Incoming")
 
-		payload, err := constructPayload(dpt, mqttMessageCfg.Type, &mqttMessageCfg.IncludedJsonFields, &groupAddress.Name)
+		payload, err := constructPayload(datapoint, groupAddress.Datapoint, mqttMessageCfg.EmitValueAsString, mqttMessageCfg.Type, &mqttMessageCfg.IncludedJsonFields, &groupAddress.Name)
 		if err != nil {
 			return
 		}
@@ -66,11 +65,9 @@ func incomingKnxEventHandler(event knx.GroupEvent, mqttClient mqtt.Client, knxIt
 	}
 }
 
-func constructPayload(dpt dpt.Datapoint, messageType string, jsonFields *models.IncludedJsonFields, addressName *string) (interface{}, error) {
+func constructPayload(dpt dpt.Datapoint, dptType string, emitValueAsString bool, messageType string, jsonFields *models.IncludedJsonFields, addressName *string) (interface{}, error) {
 	var payload interface{}
 	if messageType == models.JsonType {
-		stringWithoutSuffix := utils.StringWithoutSuffix(dpt)
-
 		outgoingJson := models.OutgoingMqttJson{}
 		if jsonFields.IncludeBytes {
 			base64 := base64.StdEncoding.EncodeToString(dpt.Pack())
@@ -80,13 +77,16 @@ func constructPayload(dpt dpt.Datapoint, messageType string, jsonFields *models.
 			outgoingJson.Name = addressName
 		}
 		if jsonFields.IncludeValue {
-			outgoingJson.Value = &stringWithoutSuffix
+			if emitValueAsString {
+				outgoingJson.Value = utils.StringWithoutSuffix(dpt)
+			} else {
+				outgoingJson.Value = utils.ExtractDatapointValue(dpt, dptType)
+			}
 		}
 		if jsonFields.IncludeUnit {
 			unit := dpt.Unit()
 			outgoingJson.Unit = &unit
 		}
-
 		jsonBytes, err := json.Marshal(outgoingJson)
 		if err != nil {
 			log.Error().Str("error", fmt.Sprintf("%+v", err)).Msg("Failed to create outgoing JSON message")
@@ -94,7 +94,11 @@ func constructPayload(dpt dpt.Datapoint, messageType string, jsonFields *models.
 		}
 		payload = string(jsonBytes)
 	} else if messageType == models.ValueType {
-		payload = strings.Trim(strings.TrimSuffix(dpt.String(), dpt.Unit()), " ")
+		if emitValueAsString {
+			payload = utils.StringWithoutSuffix(dpt)
+		} else {
+			payload = fmt.Sprintf("%v", utils.ExtractDatapointValue(dpt, dptType))
+		}
 	} else if messageType == models.ValueWithUnitType {
 		payload = dpt.String()
 	} else if messageType == models.BytesType {

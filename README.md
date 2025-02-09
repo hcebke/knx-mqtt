@@ -43,7 +43,7 @@ The app supports several payload formats for MQTT messages:
 
 | Type    | Description | Requires KNX XML |
 | -------- | ------- | ------- |
-| `value`  | String representation of the value (e.g., `24.52`) | Yes |
+| `value`  | the value (e.g., `24.42`) | Yes |
 | `value-with-unit` | String representation including the unit (e.g., `24.42 °C`) | Yes |
 | `json` | JSON representation of the message | Yes |
 | `bytes` | Raw bytes as specified by KNX | No |
@@ -54,7 +54,7 @@ When sending JSON messages, you can choose to include/exclude the following fiel
 | -------- | ------- |
 | `bytes`  | Raw bytes encoded in Base64 |
 | `name` | Name of the group address |
-| `value` | String representation of the value |
+| `value` | Value with preserved type or as string representation if emitValueAsString is true |
 | `unit` | Associated unit of the value |
 
 ## To KNX
