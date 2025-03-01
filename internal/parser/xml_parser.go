@@ -8,7 +8,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/pakerfeldt/knx-mqtt/models"
+	"github.com/pakerfeldt/knx-mqtt/internal/models"
 	"github.com/rs/zerolog/log"
 )
 

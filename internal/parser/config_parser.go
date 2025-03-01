@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/pakerfeldt/knx-mqtt/models"
+	"github.com/pakerfeldt/knx-mqtt/internal/models"
 	"gopkg.in/yaml.v3"
 )
 

@@ -3,7 +3,7 @@ package models
 import (
 	"errors"
 
-	"github.com/pakerfeldt/knx-mqtt/utils"
+	"github.com/pakerfeldt/knx-mqtt/internal/utils"
 )
 
 type GroupAddress struct {

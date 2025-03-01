@@ -6,14 +6,11 @@ COPY go.mod go.sum ./
 
 RUN go mod download
 
-COPY *.go ./
-COPY models/*.go ./models/
-COPY parser/*.go ./parser/
-COPY protocols/*.go ./protocols/
-COPY utils/*.go ./utils/
+COPY internal/ ./internal/
+COPY cmd/ ./cmd/
 
 # CGO_ENABLED=0 GOOS=linux GOARCH=amd64
-RUN go build -o /knx-mqtt
+RUN go build -o /knx-mqtt ./cmd
 
 FROM alpine:latest
 
