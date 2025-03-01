@@ -34,8 +34,6 @@ func (b *Bridge) Start() {
 	if err != nil {
 		log.Fatal().Err(*err).Msg("Error connecting to KNX endpoint")
 	}
-	//b.knxClient.Subscribe(b.handleKNXMessage)
-	//b.mqttClient.Subscribe(b.handleMQTTMessage)
 }
 
 func (b *Bridge) handleKNXMessage(message *msg.KNXMessage) {
