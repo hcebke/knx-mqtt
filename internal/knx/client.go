@@ -233,7 +233,6 @@ func (c *KNXClient) Router() *knxgo.GroupRouter {
 
 func (c *KNXClient) send(event knxgo.GroupEvent) error {
 	if c.tunnel != nil {
-		log.Info().Msgf("Writing to tunnel %v", event)
 		return c.tunnel.Send(event)
 	}
 	if c.router != nil {
