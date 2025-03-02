@@ -35,12 +35,21 @@ func NewClient(config models.Config) *MQTTClient {
 		mqttOptions.SetClientID("knx-mqtt")
 	}
 
-	mqttOpts := mqttOptions.AddBroker(config.MQTT.URL)
-	mqttOpts.OnConnectionLost = func(client mqttgo.Client, err error) {
+	if config.MQTT.TLSCA != nil && config.MQTT.TLSCert != nil && config.MQTT.TLSKey != nil {
+		tlsConfig, err := NewTLSConfig(*config.MQTT.TLSCA, *config.MQTT.TLSCert, *config.MQTT.TLSKey)
+		if err != nil {
+			log.Error().Err(err).Msg("Failed to create TLS configuration")
+		} else {
+			mqttOptions.SetTLSConfig(tlsConfig)
+		}
+	}
+	mqttOptions.AddBroker(config.MQTT.URL)
+
+	mqttOptions.OnConnectionLost = func(client mqttgo.Client, err error) {
 		log.Error().Str("error", fmt.Sprintf("%+v", err)).Msg("Connection to MQTT broker lost")
 	}
-	mqttOpts.SetOnConnectHandler(c.onConnect)
-	c.client = mqttgo.NewClient(mqttOpts)
+	mqttOptions.SetOnConnectHandler(c.onConnect)
+	c.client = mqttgo.NewClient(mqttOptions)
 	return c
 }
 

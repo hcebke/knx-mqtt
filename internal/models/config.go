@@ -44,6 +44,9 @@ type MQTTConfig struct {
 	ClientID    *string `yaml:"clientId"`
 	Username    *string `yaml:"username,omitempty"`
 	Password    *string `yaml:"password,omitempty"`
+	TLSKey      *string `yaml:"tlsKey,omitempty"`
+	TLSCert     *string `yaml:"tlsCert,omitempty"`
+	TLSCA       *string `yaml:"tlsCa,omitempty"`
 	TopicPrefix string  `yaml:"topicPrefix"`
 	Qos         byte    `yaml:"qos"`
 	Retain      bool    `yaml:"retain"`

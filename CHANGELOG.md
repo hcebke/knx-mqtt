@@ -1,3 +1,6 @@
+# Version 1.4
+- Support MQTT over TLS.
+
 # Version 1.3
 - Gracefully tries to reconnect to KNX and MQTT if connection is lost.
 - Fixed a bug where it would not send to KNX if the address existed in the ETS export and outgoing message type was set to 'bytes'.

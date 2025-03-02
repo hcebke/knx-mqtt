@@ -1,6 +1,6 @@
 ---
 # One of 'fatal', 'error', 'warn', 'info', 'debug', 'trace'
-loglevel: 'info'
+loglevel: info
 
 outgoingMqttMessage:
 
@@ -32,10 +32,10 @@ outgoingMqttMessage:
 
 knx:
   # ETS exported group addresses
-  etsExport: 'knx.xml'
+  etsExport: knx.xml
 
   # Address to the KNX gateway
-  endpoint: "224.0.23.12:3671"
+  endpoint: 224.0.23.12:3671
 
   # If true, connect over tunnel/unicast, if false use router/multicast.
   tunnelMode: false
@@ -48,16 +48,22 @@ knx:
 
 mqtt:
   # URL to MQTT broker
+  #url: 'ssl://localhost:8883'
   url: 'tcp://localhost:1883'
   
   # Set a custom ID to use for the MQTT client
   # clientId: knx-mqtt
   
-  #username: 'your username'
-  #password: 'your password'
+  #username: your username
+  #password: your password
+
+  # Set TLS configuration
+  #tlsKey: /path/to/keyfile.key
+  #tlsCert: /path/to/certificate.crt
+  #tlsCa: /path/to/certificate-authority.crt
 
   # Prefix to MQTT topic
-  topicPrefix: 'knx/'
+  topicPrefix: knx/
   # Set the QoS for published messages
   # 0 = at most once, 1 = at least once, 2 = exactly once
   qos: 0
