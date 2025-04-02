@@ -106,7 +106,7 @@ func PackString(datatype string, value string) ([]byte, error) {
 	}
 
 	if packFunc, exists := stringPackFunctions[datatype]; exists {
-		return packFunc(value), nil
+		return packFunc(value)
 	}
 
 	return nil, fmt.Errorf("unsupported datatype: %s", datatype)
@@ -306,12 +306,12 @@ var int32PackFunctions = map[string]func(int32) []byte{
 	"13.100": func(value int32) []byte { return dpt.DPT_13100(value).Pack() },
 }
 
-var stringPackFunctions = map[string]func(string) []byte{
-	"19.001": func(value string) []byte {
+var stringPackFunctions = map[string]func(string) ([]byte, error){
+	"19.001": func(value string) ([]byte, error) {
 		// Try to parse as ISO format first (e.g. "2023-05-15T14:30:45")
 		t, err := time.Parse(time.RFC3339, value)
 		if err == nil {
-			return localdpt.FromTime(t).Pack()
+			return localdpt.FromTime(t).Pack(), nil
 		}
 
 		// Try to parse using our custom format
@@ -373,16 +373,16 @@ var stringPackFunctions = map[string]func(string) []byte{
 				ReliableSync: reliableSync,
 			}
 
-			return datapoint.Pack()
+			return datapoint.Pack(), nil
 		}
 
 		// If all parsing attempts fail, return nil
-		return nil
+		return nil, fmt.Errorf("cannot convert \"%s\" to DPT 19.001 (Date/Time): unrecognized format", value)
 	},
-	"10.001": func(value string) []byte {
+	"10.001": func(value string) ([]byte, error) {
 		matches := regexpTimeOfDay.FindStringSubmatch(value)
 		if matches == nil {
-			return nil
+			return nil, fmt.Errorf("cannot convert \"%s\" to DPT 10.001 (Time): unrecognized format", value)
 		}
 
 		var weekday uint8
@@ -400,12 +400,12 @@ var stringPackFunctions = map[string]func(string) []byte{
 			Minutes: uint8(minute),
 			Seconds: uint8(second),
 		}
-		return datapoint.Pack()
+		return datapoint.Pack(), nil
 	},
-	"11.001": func(value string) []byte {
+	"11.001": func(value string) ([]byte, error) {
 		matches := regexpDate.FindStringSubmatch(value)
 		if matches == nil {
-			return nil
+			return nil, fmt.Errorf("cannot convert \"%s\" to DPT 11.001 (Date): unrecognized format", value)
 		}
 
 		year, _ := strconv.ParseUint(matches[1], 10, 16)
@@ -418,28 +418,28 @@ var stringPackFunctions = map[string]func(string) []byte{
 			Day:   uint8(day),
 		}
 
-		return datapoint.Pack()
+		return datapoint.Pack(), nil
 	},
-	"16.000": func(value string) []byte { return dpt.DPT_16000(value).Pack() },
-	"16.001": func(value string) []byte { return dpt.DPT_16001(value).Pack() },
-	"28.001": func(value string) []byte { return dpt.DPT_28001(value).Pack() },
-	"232.600": func(value string) []byte {
+	"16.000": func(value string) ([]byte, error) { return dpt.DPT_16000(value).Pack(), nil },
+	"16.001": func(value string) ([]byte, error) { return dpt.DPT_16001(value).Pack(), nil },
+	"28.001": func(value string) ([]byte, error) { return dpt.DPT_28001(value).Pack(), nil },
+	"232.600": func(value string) ([]byte, error) {
 		matches := regexpRgb.FindStringSubmatch(value)
 		if matches == nil {
-			return nil
+			return nil, fmt.Errorf("cannot convert \"%s\" to DPT 232.600 (Color RGB): unrecognized format", value)
 		}
 
 		red, err := strconv.ParseUint(matches[1], 16, 8)
 		if err != nil {
-			return nil
+			return nil, fmt.Errorf("cannot convert \"%s\" to DPT 232.600 (Color RGB): red component not a positive integer", value)
 		}
 		green, err := strconv.ParseUint(matches[2], 16, 8)
 		if err != nil {
-			return nil
+			return nil, fmt.Errorf("cannot convert \"%s\" to DPT 232.600 (Color RGB): green component not a positive integer", value)
 		}
 		blue, err := strconv.ParseUint(matches[3], 16, 8)
 		if err != nil {
-			return nil
+			return nil, fmt.Errorf("cannot convert \"%s\" to DPT 232.600 (Color RGB): blue component not a positive integer", value)
 		}
 
 		datapoint := dpt.DPT_232600{
@@ -448,34 +448,34 @@ var stringPackFunctions = map[string]func(string) []byte{
 			Blue:  uint8(blue),
 		}
 
-		return datapoint.Pack()
+		return datapoint.Pack(), nil
 	},
-	"242.600": func(value string) []byte {
+	"242.600": func(value string) ([]byte, error) {
 		matches := regexpXyy.FindStringSubmatch(value)
 		if matches == nil {
-			return nil
+			return nil, fmt.Errorf("cannot convert \"%s\" to DPT 242.600 (Color xyY): unrecognized format", value)
 		}
 
 		// Parse the extracted strings to appropriate types
 		x, err := strconv.ParseUint(matches[1], 10, 16)
 		if err != nil {
-			return nil
+			return nil, fmt.Errorf("cannot convert \"%s\" to DPT 242.600 (Color xyY): x component not a positive integer", value)
 		}
 		y, err := strconv.ParseUint(matches[2], 10, 16)
 		if err != nil {
-			return nil
+			return nil, fmt.Errorf("cannot convert \"%s\" to DPT 242.600 (Color xyY): y component not a positive integer", value)
 		}
 		yBrightness, err := strconv.ParseUint(matches[3], 10, 8)
 		if err != nil {
-			return nil
+			return nil, fmt.Errorf("cannot convert \"%s\" to DPT 242.600 (Color xyY): Y brightness component not a positive integer", value)
 		}
 		colorValid, err := strconv.ParseBool(matches[4])
 		if err != nil {
-			return nil
+			return nil, fmt.Errorf("cannot convert \"%s\" to DPT 242.600 (Color xyY): color valid component not a boolean", value)
 		}
 		brightnessValid, err := strconv.ParseBool(matches[5])
 		if err != nil {
-			return nil
+			return nil, fmt.Errorf("cannot convert \"%s\" to DPT 242.600 (Color xyY): brightness valid component not a boolean", value)
 		}
 
 		datapoint := dpt.DPT_242600{
@@ -486,46 +486,46 @@ var stringPackFunctions = map[string]func(string) []byte{
 			BrightnessValid: brightnessValid,
 		}
 
-		return datapoint.Pack()
+		return datapoint.Pack(), nil
 	},
-	"251.600": func(value string) []byte {
+	"251.600": func(value string) ([]byte, error) {
 		matches := regexpRgbw.FindStringSubmatch(value)
 		if matches == nil {
-			return nil
+			return nil, fmt.Errorf("cannot convert \"%s\" to DPT 251.600 (Color RGBW): unrecognized format", value)
 		}
 
 		// Parse the extracted strings to appropriate types
 		red, err := strconv.ParseUint(matches[1], 10, 8)
 		if err != nil {
-			return nil
+			return nil, fmt.Errorf("cannot convert \"%s\" to DPT 251.600 (Color RGBW): red component not a positive integer", value)
 		}
 		green, err := strconv.ParseUint(matches[2], 10, 8)
 		if err != nil {
-			return nil
+			return nil, fmt.Errorf("cannot convert \"%s\" to DPT 251.600 (Color RGBW): green component not a positive integer", value)
 		}
 		blue, err := strconv.ParseUint(matches[3], 10, 8)
 		if err != nil {
-			return nil
+			return nil, fmt.Errorf("cannot convert \"%s\" to DPT 251.600 (Color RGBW): blue component not a positive integer", value)
 		}
 		white, err := strconv.ParseUint(matches[4], 10, 8)
 		if err != nil {
-			return nil
+			return nil, fmt.Errorf("cannot convert \"%s\" to DPT 251.600 (Color RGBW): white component not a positive integer", value)
 		}
 		redValid, err := strconv.ParseBool(matches[5])
 		if err != nil {
-			return nil
+			return nil, fmt.Errorf("cannot convert \"%s\" to DPT 251.600 (Color RGBW): red valid component not a boolean", value)
 		}
 		greenValid, err := strconv.ParseBool(matches[6])
 		if err != nil {
-			return nil
+			return nil, fmt.Errorf("cannot convert \"%s\" to DPT 251.600 (Color RGBW): green valid component not a boolean", value)
 		}
 		blueValid, err := strconv.ParseBool(matches[7])
 		if err != nil {
-			return nil
+			return nil, fmt.Errorf("cannot convert \"%s\" to DPT 251.600 (Color RGBW): blue valid component not a boolean", value)
 		}
 		whiteValid, err := strconv.ParseBool(matches[8])
 		if err != nil {
-			return nil
+			return nil, fmt.Errorf("cannot convert \"%s\" to DPT 251.600 (Color RGBW): white valid component not a boolean", value)
 		}
 
 		// Create the DPT_251600 instance
@@ -540,7 +540,7 @@ var stringPackFunctions = map[string]func(string) []byte{
 			WhiteValid: whiteValid,
 		}
 
-		return datapoint.Pack()
+		return datapoint.Pack(), nil
 	},
 }
 

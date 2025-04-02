@@ -153,6 +153,10 @@ func (c *KNXClient) createWriteEvent(payload []byte, address string, writeRawBin
 		packedBytes = payload
 	} else if exists {
 		packedBytes, err = utils.PackString(groupAddress.Datapoint, string(payload))
+		if err != nil {
+			log.Error().Err(err).Msg("Cannot pack payload")
+			return nil
+		}
 	} else {
 		log.Error().Str("address", destination.String()).Msg("Missing reference to group address for converting to non-binary payload")
 		return nil
