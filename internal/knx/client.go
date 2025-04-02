@@ -12,7 +12,8 @@ import (
 	"github.com/rs/zerolog/log"
 	knxgo "github.com/vapourismo/knx-go/knx"
 	"github.com/vapourismo/knx-go/knx/cemi"
-	"github.com/vapourismo/knx-go/knx/dpt"
+
+	localdpt "github.com/pakerfeldt/knx-mqtt/internal/dpt"
 )
 
 type KNXClient struct {
@@ -68,12 +69,15 @@ func (c *KNXClient) newMessage(event knxgo.GroupEvent) *msg.KNXMessage {
 		return msg.NewKNX(event, nil, nil)
 	}
 	groupAddress := c.knxItems.GroupAddresses[index]
-	datapoint, ok := dpt.Produce(groupAddress.Datapoint)
+	datapoint, ok := localdpt.Produce(groupAddress.Datapoint)
 	if !ok {
-		log.Error().Msgf("Failed to create datapoint %s", groupAddress.Datapoint)
+		log.Error().Msgf("Failed to create datapoint %s, payload: %x", groupAddress.Datapoint, event.Data)
 		return msg.NewKNX(event, nil, nil)
 	}
-	datapoint.Unpack(event.Data)
+	err = datapoint.Unpack(event.Data)
+	if err != nil {
+		log.Error().Err(err).Str("group address", groupAddress.Address).Hex("payload", event.Data).Msg("Failed to unpack KNX payload")
+	}
 	return msg.NewKNX(event, &datapoint, &groupAddress)
 }
 
