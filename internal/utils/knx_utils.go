@@ -6,7 +6,9 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 
+	localdpt "github.com/pakerfeldt/knx-mqtt/internal/dpt"
 	"github.com/vapourismo/knx-go/knx/dpt"
 )
 
@@ -16,6 +18,7 @@ var regexpFlatGad = regexp.MustCompile(`^\d+$`)
 
 var regexpTimeOfDay = regexp.MustCompile(`^(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday)?\s*(\d{2}):(\d{2}):(\d{2})$`)
 var regexpDate = regexp.MustCompile(`^(\d{4})-(\d{2})-(\d{2})$`)
+var regexpDateTime = regexp.MustCompile(`^(\d{4})-(\d{2})-(\d{2})(?:\s+(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday))?\s+(\d{2}):(\d{2}):(\d{2})(?:\s+\(Summer Time\))?(?:\s+\[(.*)\])?$`)
 var regexpRgb = regexp.MustCompile(`^#([A-Fa-f0-9]{2})([A-Fa-f0-9]{2})([A-Fa-f0-9]{2})$`)
 var regexpXyy = regexp.MustCompile(`^x:\s*(\d+)\s*y:\s*(\d+)\s*Y:\s*(\d+)\s*ColorValid:\s*(true|false),\s*BrightnessValid:\s*(true|false)$`)
 var regexpRgbw = regexp.MustCompile(`^Red:\s*(\d+)\s*Green:\s*(\d+)\s*Blue:\s*(\d+)\s*White:\s*(\d+)\s*RedValid:\s*(true|false),\s*GreenValid:\s*(true|false),\s*BlueValid:\s*(true|false),\s*WhiteValid:\s*(true|false)$`)
@@ -304,6 +307,78 @@ var int32PackFunctions = map[string]func(int32) []byte{
 }
 
 var stringPackFunctions = map[string]func(string) []byte{
+	"19.001": func(value string) []byte {
+		// Try to parse as ISO format first (e.g. "2023-05-15T14:30:45")
+		t, err := time.Parse(time.RFC3339, value)
+		if err == nil {
+			return localdpt.FromTime(t).Pack()
+		}
+
+		// Try to parse using our custom format
+		matches := regexpDateTime.FindStringSubmatch(value)
+		if matches != nil {
+			year, _ := strconv.ParseUint(matches[1], 10, 16)
+			month, _ := strconv.ParseUint(matches[2], 10, 8)
+			day, _ := strconv.ParseUint(matches[3], 10, 8)
+
+			var weekday uint8
+			if len(matches) > 4 && matches[4] != "" {
+				if day, ok := weekdays[matches[4]]; ok {
+					weekday = day
+				}
+			}
+
+			hour, _ := strconv.ParseUint(matches[5], 10, 8)
+			minute, _ := strconv.ParseUint(matches[6], 10, 8)
+			second, _ := strconv.ParseUint(matches[7], 10, 8)
+
+			// Check if summer time is specified
+			summerTime := false
+			if len(matches) > 7 && strings.Contains(value, "(Summer Time)") {
+				summerTime = true
+			}
+
+			// Parse flags if present
+			fault := false
+			workingDay := false
+			externalSync := false
+			reliableSync := false
+
+			if len(matches) > 8 && matches[8] != "" {
+				flags := matches[8]
+				fault = strings.Contains(flags, "Fault")
+				workingDay = strings.Contains(flags, "Working Day")
+				externalSync = strings.Contains(flags, "External Sync")
+				reliableSync = strings.Contains(flags, "Reliable Sync")
+			}
+
+			// Convert year to KNX format (offset from 1900)
+			yearOffset := uint8(0)
+			if year >= 1900 && year <= 2155 {
+				yearOffset = uint8(year - 1900)
+			}
+
+			datapoint := localdpt.DPT_19001{
+				Year:         yearOffset,
+				Month:        uint8(month),
+				DayOfMonth:   uint8(day),
+				DayOfWeek:    weekday,
+				HourOfDay:    uint8(hour),
+				Minutes:      uint8(minute),
+				Seconds:      uint8(second),
+				Fault:        fault,
+				WorkingDay:   workingDay,
+				SummerTime:   summerTime,
+				ExternalSync: externalSync,
+				ReliableSync: reliableSync,
+			}
+
+			return datapoint.Pack()
+		}
+
+		// If all parsing attempts fail, return nil
+		return nil
+	},
 	"10.001": func(value string) []byte {
 		matches := regexpTimeOfDay.FindStringSubmatch(value)
 		if matches == nil {
@@ -504,6 +579,16 @@ func ExtractDatapointValue(dp dpt.Datapoint, dptType string) interface{} {
 		if rv.Kind() == reflect.Uint8 {
 			return uint8(rv.Uint())
 		}
+	case "19":
+		// For DateTime, properly extract the date/time value
+		if dptType == "19.001" {
+			// Check if we're dealing with our custom DPT_19001 type
+			if dpt19, ok := dp.(*localdpt.DPT_19001); ok {
+				return dpt19.ToTime().Format(time.RFC3339)
+			}
+		}
+		// Fallback to string representation if not our custom type
+		return StringWithoutSuffix(dp)
 	}
 
 	switch dptType {
