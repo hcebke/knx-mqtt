@@ -87,7 +87,7 @@ func ReadGroupsFromFile(filePath string, gaTranslation models.FlatAddressTransla
 				}
 				knxItems.AddGroupAddress(models.GroupAddress{
 					Name:        address.Name,
-					FullName:    fmt.Sprintf("%s/%s/%s", main.Name, middle.Name, replaceSlashInName(address.Name)),
+					FullName:    fmt.Sprintf("%s/%s/%s", replaceSlashInName(main.Name), replaceSlashInName(middle.Name), replaceSlashInName(address.Name)),
 					Address:     translatedAddr,
 					FlatAddress: flatAddr,
 					Datapoint:   convertDptFormat(address.DPTs),

@@ -71,7 +71,7 @@ func (c *KNXClient) newMessage(event knxgo.GroupEvent) *msg.KNXMessage {
 	groupAddress := c.knxItems.GroupAddresses[index]
 	datapoint, ok := localdpt.Produce(groupAddress.Datapoint)
 	if !ok {
-		log.Error().Msgf("Failed to create datapoint %s, payload: %x", groupAddress.Datapoint, event.Data)
+		log.Error().Str("group address", groupAddress.Address).Str("datapoint", groupAddress.Datapoint).Hex("payload", event.Data).Msgf("Failed to create datapoint")
 		return msg.NewKNX(event, nil, nil)
 	}
 	err = datapoint.Unpack(event.Data)
