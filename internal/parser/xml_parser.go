@@ -42,7 +42,7 @@ func ParseGroupAddressExport(filePath string) (*models.KNX, error) {
 				}
 				knxItems.AddGroupAddress(models.GroupAddress{
 					Name:      address.Name,
-					FullName:  fmt.Sprintf("%s/%s/%s", main.Name, middle.Name, replaceSlashInName(address.Name)),
+					FullName:  fmt.Sprintf("%s/%s/%s", replaceSlashInName(main.Name), replaceSlashInName(middle.Name), replaceSlashInName(address.Name)),
 					Address:   address.Address,
 					Datapoint: convertDptFormat(address.DPTs),
 				})
