@@ -57,6 +57,23 @@ knx:
   #   "3-part" or "three-part" = 3-part notation (main/middle/sub)
   translateFlatGroupAddresses: "3-part"
 
+  # KNX message logging configuration
+  knxLog:
+    # Enable KNX message logging to file
+    enabled: false
+    # Log format: 'json' or 'text'
+    format: json
+    # Path to the log file
+    file: /var/log/knx-mqtt/knx-messages.log
+    # Maximum size in KiB before rotation
+    maxSize: 102400
+    # Maximum age in days before deletion
+    maxAge: "24h"
+    # Maximum number of files to keep
+    maxFiles: 5
+    # Whether to compress rotated files
+    compress: true
+
 mqtt:
   # URL to MQTT broker
   #url: 'ssl://localhost:8883'

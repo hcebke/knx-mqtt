@@ -34,6 +34,10 @@ func (m KNXMessage) Destination() string {
 	return m.ge.Destination.String()
 }
 
+func (m KNXMessage) Command() string {
+	return utils.KNXCommandToString(m.ge.Command)
+}
+
 func (m KNXMessage) Data() []byte {
 	return m.ge.Data
 }
