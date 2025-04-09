@@ -14,7 +14,7 @@ COPY cmd/ ./cmd/
 RUN CGO_ENABLED=0 go build -ldflags="-s -w" -o /knx-mqtt ./cmd
 
 # Build from scratch for added leanness and security
-FROM scratch
+FROM scratch AS knx-mqtt-minimal
 
 WORKDIR /app
 
@@ -22,5 +22,14 @@ COPY --from=build /knx-mqtt .
 
 # Use non-root user for security
 USER 1337:1337
+
+CMD ["/app/knx-mqtt"]
+
+
+FROM alpine:latest AS knx-mqtt
+
+WORKDIR /app
+
+COPY --from=build /knx-mqtt .
 
 CMD ["/app/knx-mqtt"]
