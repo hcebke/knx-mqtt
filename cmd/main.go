@@ -56,7 +56,19 @@ func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
-	knxClient := knx.NewClient(ctx, *cfg, knxItems)
+	// Initialize KNX message logger if enabled
+	var knxLogger *knx.KNXLogger
+	if cfg.KNX.KNXLog.Enabled {
+		logger, err := knx.NewKNXLogger(cfg.KNX.KNXLog, knxItems)
+		if err != nil {
+			log.Error().Err(err).Msg("Failed to initialize KNX message logger")
+		} else {
+			knxLogger = logger
+			log.Info().Str("file", cfg.KNX.KNXLog.File).Msg("KNX message logging enabled")
+		}
+	}
+
+	knxClient := knx.NewClient(ctx, *cfg, knxItems, knxLogger)
 	mqttClient := mqtt.NewClient(*cfg)
 
 	// Close upon exiting.

@@ -17,17 +17,24 @@ import (
 )
 
 type KNXClient struct {
-	ctx      context.Context
-	cancel   context.CancelFunc
-	cfg      *models.Config
-	knxItems *models.KNX
-	tunnel   *knxgo.GroupTunnel
-	router   *knxgo.GroupRouter
+	ctx       context.Context
+	cancel    context.CancelFunc
+	cfg       *models.Config
+	knxItems  *models.KNX
+	tunnel    *knxgo.GroupTunnel
+	router    *knxgo.GroupRouter
+	knxLogger *KNXLogger
 }
 
-func NewClient(ctx context.Context, config models.Config, knxItems *models.KNX) *KNXClient {
+func NewClient(ctx context.Context, config models.Config, knxItems *models.KNX, logger *KNXLogger) *KNXClient {
 	childCtx, cancel := context.WithCancel(ctx)
-	client := KNXClient{ctx: childCtx, cancel: cancel, cfg: &config, knxItems: knxItems}
+	client := KNXClient{
+		ctx:       childCtx,
+		cancel:    cancel,
+		cfg:       &config,
+		knxItems:  knxItems,
+		knxLogger: logger,
+	}
 	return &client
 }
 
@@ -99,6 +106,14 @@ func (c *KNXClient) subscribe(callback func(*msg.KNXMessage)) {
 					}
 
 					message := c.newMessage(event)
+
+					// Log incoming message if logger is enabled
+					if c.knxLogger != nil {
+						if err := c.knxLogger.LogIncoming(message); err != nil {
+							log.Error().Err(err).Msg("Failed to log incoming KNX message")
+						}
+					}
+
 					callback(message)
 				}
 			}
@@ -245,6 +260,13 @@ func (c *KNXClient) Router() *knxgo.GroupRouter {
 }
 
 func (c *KNXClient) send(event knxgo.GroupEvent) error {
+	// Log outgoing message if logger is enabled
+	if c.knxLogger != nil {
+		if err := c.knxLogger.LogOutgoing(event); err != nil {
+			log.Error().Err(err).Msg("Failed to log outgoing KNX message")
+		}
+	}
+
 	if c.tunnel != nil {
 		return c.tunnel.Send(event)
 	}
@@ -274,5 +296,12 @@ func (c *KNXClient) Close() {
 	}
 	if c.router != nil {
 		c.router.Close()
+	}
+
+	// Close logger if initialized
+	if c.knxLogger != nil {
+		if err := c.knxLogger.Close(); err != nil {
+			log.Error().Err(err).Msg("Failed to close KNX message logger")
+		}
 	}
 }

@@ -1,5 +1,7 @@
 package models
 
+import "time"
+
 // Config represents the top-level structure of the YAML configuration.
 type Config struct {
 	LogLevel                    string              `yaml:"loglevel"`
@@ -29,6 +31,17 @@ type IncludedJsonFields struct {
 	IncludeUnit  bool `yaml:"unit"`
 }
 
+// KNXLogConfig represents the KNX message logging configuration.
+type KNXLogConfig struct {
+	Enabled  bool          `yaml:"enabled"`
+	Format   string        `yaml:"format"`
+	File     string        `yaml:"file"`
+	MaxSize  int           `yaml:"maxSize"`  // Maximum size in KiB before rotation
+	MaxAge   time.Duration `yaml:"maxAge"`   // Maximum age before deletion
+	MaxFiles int           `yaml:"maxFiles"` // Maximum number of files to keep
+	Compress bool          `yaml:"compress"` // Whether to compress rotated files
+}
+
 // KNXConfig represents the KNX configuration section.
 type KNXConfig struct {
 	ETSExport                   string                 `yaml:"etsExport"`
@@ -37,6 +50,7 @@ type KNXConfig struct {
 	IgnoreUnknownGroupAddresses bool                   `yaml:"ignoreUnknownGroupAddresses"`
 	EnableLogs                  bool                   `yaml:"enableLogs"`
 	GaTranslation               FlatAddressTranslation `yaml:"translateFlatGroupAddresses"`
+	KNXLog                      KNXLogConfig           `yaml:"knxLog"`
 }
 
 // MQTTConfig represents the MQTT configuration section.
