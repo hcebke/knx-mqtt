@@ -108,6 +108,9 @@ func (m KNXMessage) ToPayload(emitValueAsString bool, messageType string, jsonFi
 			unit := m.resolvedDatapoint.datapoint.Unit()
 			outgoingJson.Unit = &unit
 		}
+		if jsonFields.IncludeCommand {
+			outgoingJson.Command = m.Command()
+		}
 		jsonBytes, err := json.Marshal(outgoingJson)
 		if err != nil {
 			log.Error().Str("error", fmt.Sprintf("%+v", err)).Msg("Failed to create outgoing JSON message")
@@ -155,6 +158,9 @@ func (m KNXMessage) ToPayload3(groupAddress models.GroupAddress, emitValueAsStri
 		if jsonFields.IncludeUnit {
 			unit := datapoint.Unit()
 			outgoingJson.Unit = &unit
+		}
+		if jsonFields.IncludeCommand {
+			outgoingJson.Command = m.Command()
 		}
 		jsonBytes, err := json.Marshal(outgoingJson)
 		if err != nil {

@@ -29,6 +29,11 @@ outgoingMqttMessage:
     value: true
     # Include the field `unit`, containing the unit of the datatype (if any)
     unit: true
+    # Include the field `command`, containing the KNX command (can be one of "GroupValue_Read", "GroupValue_Write", "GroupValue_Response")
+    command: true
+
+  # If true, KNX commands "GroupValue_Read" will be emitted to <topicPrefix>/x/x/x/GroupValue_Read
+  readCommandsOwnPrefix: true
 
 knx:
   # ETS exported group addresses

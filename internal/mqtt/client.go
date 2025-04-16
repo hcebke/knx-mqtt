@@ -105,10 +105,17 @@ func (c *MQTTClient) Send(message msg.KNXMessage) {
 		}
 	}
 
+	// Check if this is a GroupValue_Read command and if we should use a separate topic suffix
+	isReadCommand := message.Command() == "GroupValue_Read"
+	readSuffix := ""
+	if isReadCommand && c.cfg.OutgoingMqttMessage.ReadCommandsOwnPrefix {
+		readSuffix = "/GroupValue_Read"
+	}
+
 	if c.cfg.OutgoingMqttMessage.EmitUsingAddress {
-		c.client.Publish(c.cfg.MQTT.TopicPrefix+message.Address(), c.cfg.MQTT.Qos, c.cfg.MQTT.Retain, payload)
+		c.client.Publish(c.cfg.MQTT.TopicPrefix+message.Address()+readSuffix, c.cfg.MQTT.Qos, c.cfg.MQTT.Retain, payload)
 	}
 	if c.cfg.OutgoingMqttMessage.EmitUsingName {
-		c.client.Publish(c.cfg.MQTT.TopicPrefix+message.FullName(), c.cfg.MQTT.Qos, c.cfg.MQTT.Retain, payload)
+		c.client.Publish(c.cfg.MQTT.TopicPrefix+message.FullName()+readSuffix, c.cfg.MQTT.Qos, c.cfg.MQTT.Retain, payload)
 	}
 }

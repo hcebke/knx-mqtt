@@ -17,18 +17,20 @@ const BytesType = "bytes"
 const JsonType = "json"
 
 type OutgoingMqttMessage struct {
-	Type               string             `yaml:"type"`
-	EmitUsingAddress   bool               `yaml:"emitUsingAddress"`
-	EmitUsingName      bool               `yaml:"emitUsingName"`
-	EmitValueAsString  bool               `yaml:"emitValueAsString"`
-	IncludedJsonFields IncludedJsonFields `yaml:"includedJsonFields"`
+	Type                  string             `yaml:"type"`
+	EmitUsingAddress      bool               `yaml:"emitUsingAddress"`
+	EmitUsingName         bool               `yaml:"emitUsingName"`
+	EmitValueAsString     bool               `yaml:"emitValueAsString"`
+	ReadCommandsOwnPrefix bool               `yaml:"readCommandsOwnPrefix"`
+	IncludedJsonFields    IncludedJsonFields `yaml:"includedJsonFields"`
 }
 
 type IncludedJsonFields struct {
-	IncludeBytes bool `yaml:"bytes"`
-	IncludeName  bool `yaml:"name"`
-	IncludeValue bool `yaml:"value"`
-	IncludeUnit  bool `yaml:"unit"`
+	IncludeBytes   bool `yaml:"bytes"`
+	IncludeName    bool `yaml:"name"`
+	IncludeValue   bool `yaml:"value"`
+	IncludeUnit    bool `yaml:"unit"`
+	IncludeCommand bool `yaml:"command"`
 }
 
 // KNXLogConfig represents the KNX message logging configuration.
