@@ -2,6 +2,7 @@ package knx
 
 import (
 	"compress/gzip"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -32,14 +33,14 @@ type KNXLogger struct {
 
 // KNXLogEntry represents a log entry for a KNX message
 type KNXLogEntry struct {
-	Timestamp    time.Time   `json:"timestamp"`
-	Direction    string      `json:"direction"`
-	Destination  string      `json:"destination"`
-	Command      string      `json:"command"`
-	Data         string      `json:"data,omitempty"`
-	Name         string      `json:"name,omitempty"`
-	DecodedValue interface{} `json:"decoded_value,omitempty"`
-	Unit         string      `json:"unit,omitempty"`
+	Timestamp   time.Time   `json:"timestamp"`
+	Direction   string      `json:"direction"`
+	Destination string      `json:"destination"`
+	Command     string      `json:"command"`
+	Bytes       string      `json:"bytes,omitempty"`
+	Name        string      `json:"name,omitempty"`
+	Value       interface{} `json:"value,omitempty"`
+	Unit        string      `json:"unit,omitempty"`
 }
 
 // NewKNXLogger creates a new KNX logger
@@ -87,7 +88,7 @@ func (l *KNXLogger) LogIncoming(message *msg.KNXMessage) error {
 		Direction:   "incoming",
 		Destination: message.Destination(),
 		Command:     message.Command(),
-		Data:        fmt.Sprintf("%X", message.Data()),
+		Bytes:       base64.StdEncoding.EncodeToString(message.Data()),
 	}
 
 	if message.IsResolved() {
@@ -101,7 +102,7 @@ func (l *KNXLogger) LogIncoming(message *msg.KNXMessage) error {
 			// Extract the decoded value
 			if dp, ok := dpt.Produce(dpType); ok {
 				if err := dp.Unpack(message.Data()); err == nil {
-					entry.DecodedValue = utils.ExtractDatapointValue(dp, dpType)
+					entry.Value = utils.ExtractDatapointValue(dp, dpType)
 					entry.Unit = dp.Unit()
 				}
 			}
@@ -124,7 +125,7 @@ func (l *KNXLogger) LogOutgoing(event knxgo.GroupEvent) error {
 		Direction:   "outgoing",
 		Destination: event.Destination.String(),
 		Command:     commandStr,
-		Data:        fmt.Sprintf("%X", event.Data),
+		Bytes:       base64.StdEncoding.EncodeToString(event.Data),
 	}
 
 	// Try to resolve the group address and add decoded value and unit
@@ -138,7 +139,7 @@ func (l *KNXLogger) LogOutgoing(event knxgo.GroupEvent) error {
 			dpType := groupAddress.Datapoint
 			if dp, ok := dpt.Produce(dpType); ok {
 				if err := dp.Unpack(event.Data); err == nil {
-					entry.DecodedValue = utils.ExtractDatapointValue(dp, dpType)
+					entry.Value = utils.ExtractDatapointValue(dp, dpType)
 					entry.Unit = dp.Unit()
 				}
 			}
@@ -174,9 +175,9 @@ func (l *KNXLogger) writeLogEntry(entry KNXLogEntry) error {
 			entry.Direction,
 			entry.Destination,
 			entry.Command,
-			entry.Data,
+			entry.Bytes,
 			entry.Name,
-			entry.DecodedValue,
+			entry.Value,
 			entry.Unit,
 		)
 	}
