@@ -137,7 +137,7 @@ func (c *KNXClient) subscribe(callback func(*msg.KNXMessage)) {
 	}()
 }
 
-func (c *KNXClient) createWriteEvent(payload []byte, address string, writeRawBinary bool) *knxgo.GroupEvent {
+func (c *KNXClient) createWriteEvent(payload []byte, address string, writeRawBinary bool, isResponse bool) *knxgo.GroupEvent {
 	groupAddress, exists := c.knxItems.GetGroupAddress(address)
 	isRegularAddress := utils.IsRegularGroupAddress(address)
 
@@ -182,8 +182,13 @@ func (c *KNXClient) createWriteEvent(payload []byte, address string, writeRawBin
 		return nil
 	}
 
+	command := knxgo.GroupWrite
+	if isResponse {
+		command = knxgo.GroupResponse
+	}
+
 	return &knxgo.GroupEvent{
-		Command:     knxgo.GroupWrite,
+		Command:     command,
 		Destination: destination,
 		Data:        packedBytes,
 	}
@@ -226,9 +231,10 @@ func (c *KNXClient) Send(message msg.MQTTMessage) {
 	command := message.Topic()[strings.LastIndex(message.Topic(), "/")+1:]
 
 	var event *knxgo.GroupEvent
-	if command == "write" || command == "write-bytes" {
-		writeBytes := command == "write-bytes"
-		event = c.createWriteEvent(message.Bytes(), address, writeBytes)
+	if command == "write" || command == "write-bytes" || command == "response" || command == "response-bytes" {
+		writeBytes := command == "write-bytes" || command == "response-bytes"
+		isResponse := strings.HasPrefix(command, "response")
+		event = c.createWriteEvent(message.Bytes(), address, writeBytes, isResponse)
 		if event == nil {
 			log.Error().Msg("Failed to create KNX write event")
 			return
