@@ -31,6 +31,7 @@ type IncludedJsonFields struct {
 	IncludeValue   bool `yaml:"value"`
 	IncludeUnit    bool `yaml:"unit"`
 	IncludeCommand bool `yaml:"command"`
+	IncludeSource  bool `yaml:"source"`
 }
 
 // KNXLogConfig represents the KNX message logging configuration.

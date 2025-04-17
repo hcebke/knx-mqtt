@@ -6,4 +6,5 @@ type OutgoingMqttJson struct {
 	Value   any     `json:"value,omitempty"`
 	Unit    *string `json:"unit,omitempty"`
 	Command string  `json:"command"`
+	Source  string  `json:"source"`
 }

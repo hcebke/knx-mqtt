@@ -31,6 +31,8 @@ outgoingMqttMessage:
     unit: true
     # Include the field `command`, containing the KNX command (can be one of "GroupValue_Read", "GroupValue_Write", "GroupValue_Response")
     command: true
+    # Include the field `source`, containing the KNX sender address
+    source: true
 
   # If true, KNX commands "GroupValue_Read" will be emitted to <topicPrefix>/x/x/x/GroupValue_Read
   readCommandsOwnPrefix: true

@@ -35,6 +35,7 @@ type KNXLogger struct {
 type KNXLogEntry struct {
 	Timestamp   time.Time   `json:"timestamp"`
 	Direction   string      `json:"direction"`
+	Source      string      `json:"source"`
 	Destination string      `json:"destination"`
 	Command     string      `json:"command"`
 	Bytes       string      `json:"bytes,omitempty"`
@@ -86,6 +87,7 @@ func (l *KNXLogger) LogIncoming(message *msg.KNXMessage) error {
 	entry := KNXLogEntry{
 		Timestamp:   time.Now(),
 		Direction:   "incoming",
+		Source:      message.Source(),
 		Destination: message.Destination(),
 		Command:     message.Command(),
 		Bytes:       base64.StdEncoding.EncodeToString(message.Data()),
@@ -123,6 +125,7 @@ func (l *KNXLogger) LogOutgoing(event knxgo.GroupEvent) error {
 	entry := KNXLogEntry{
 		Timestamp:   time.Now(),
 		Direction:   "outgoing",
+		Source:      event.Source.String(),
 		Destination: event.Destination.String(),
 		Command:     commandStr,
 		Bytes:       base64.StdEncoding.EncodeToString(event.Data),
@@ -170,9 +173,10 @@ func (l *KNXLogger) writeLogEntry(entry KNXLogEntry) error {
 		data = append(data, '\n')
 	} else {
 		// Text format
-		data = fmt.Appendf(nil, "[%s] %s %s %s %s %s %v %s\n",
+		data = fmt.Appendf(nil, "[%s] %s %s %s %s %s %s %v %s\n",
 			entry.Timestamp.Format(time.RFC3339),
 			entry.Direction,
+			entry.Source,
 			entry.Destination,
 			entry.Command,
 			entry.Bytes,

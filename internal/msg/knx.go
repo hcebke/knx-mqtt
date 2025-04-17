@@ -30,6 +30,10 @@ func NewKNX(ge knxgo.GroupEvent, datapoint *dpt.Datapoint, groupAddress *models.
 	return &KNXMessage{ge: ge, resolvedDatapoint: resolvedDatapoint}
 }
 
+func (m KNXMessage) Source() string {
+	return m.ge.Source.String()
+}
+
 func (m KNXMessage) Destination() string {
 	return m.ge.Destination.String()
 }
@@ -111,6 +115,9 @@ func (m KNXMessage) ToPayload(emitValueAsString bool, messageType string, jsonFi
 		if jsonFields.IncludeCommand {
 			outgoingJson.Command = m.Command()
 		}
+		if jsonFields.IncludeSource {
+			outgoingJson.Source = m.Source()
+		}
 		jsonBytes, err := json.Marshal(outgoingJson)
 		if err != nil {
 			log.Error().Str("error", fmt.Sprintf("%+v", err)).Msg("Failed to create outgoing JSON message")
@@ -161,6 +168,9 @@ func (m KNXMessage) ToPayload3(groupAddress models.GroupAddress, emitValueAsStri
 		}
 		if jsonFields.IncludeCommand {
 			outgoingJson.Command = m.Command()
+		}
+		if jsonFields.IncludeSource {
+			outgoingJson.Source = m.Source()
 		}
 		jsonBytes, err := json.Marshal(outgoingJson)
 		if err != nil {
